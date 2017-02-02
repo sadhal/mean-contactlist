@@ -52,7 +52,8 @@ function fetch(callback) {
   request
     .get(myURL, function(error, response, body) {
       if (!error && response.statusCode == 200) {
-        console.log(body);
+        console.log('Body: ', body);
+        body = body ? JSON.parse(body) : [];
         callback(null, body.map(function(c, index) {
           return {
             _id : c.id,
