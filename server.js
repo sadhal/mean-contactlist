@@ -23,13 +23,7 @@ function handleError(res, reason, message, code) {
   res.status(code || 500).json({"error": message});
 }
 
-/*  "/contacts"
- *    GET: finds all contacts
- *    POST: creates a new contact
- */
-
-
-var dbContacts = [{ name: "sadmir", username: "sadhal", createdOn: new Date() }];
+//var dbContacts = [{ name: "sadmir", username: "sadhal", createdOn: new Date() }];
 var myURL = 'http://gradle-spingboot-seed-contacts-be-dev.10.101.2.180.xip.io/personer';
 var host = process.env.GRADLE_SPINGBOOT_SEED_SERVICE_HOST;
 var port = process.env.GRADLE_SPINGBOOT_SEED_SERVICE_PORT;
@@ -38,33 +32,38 @@ if (host && port) {
 }
 console.log('Rest url: ' + myURL);
 
+/*  "/contacts"
+ *    GET: finds all contacts
+ *    POST: creates a new contact
+ */
+
 app.get("/contacts", function(req, res) {
 
-  try {
-    request
-      .get(myURL, function(error, response, body) {
-        if (error) console.error(error);
-        else if (response.statusCode == 200) {
-          console.log(body);
-        } else { 
-          console.error("bad response");
-          console.error(response.statusCode);
-        }
-      });
-
-  } catch (t) {
-    console.error(t);
-  }
-
-  res.status(200).json(dbContacts.map(function(c, index){
-    return {
-			_id : index,
-			firstName : c.name,
-			lastName  : c.name,
-			createdOn	: c.createdOn
-    };
-  }));
+  fetch(function(error, body) {
+    if (body) {
+      res.status(200).json(body);
+    } else {
+      res.status(500);
+    }
+  });
 });
+
+function fetch(callback) {
+  request
+    .get(myURL, function(error, response, body) {
+      if (!error && response.statusCode == 200) {
+        console.log(body);
+        callback(null, body.map(function(c, index) {
+          return {
+            _id : c.id,
+            firstName : c.name,
+            lastName  : c.name,
+            createdOn : c.createdOn
+          };
+        }));
+      }
+    }
+}
 
 app.post("/contacts", function(req, res) {
   var newContact = req.body;
@@ -88,8 +87,6 @@ app.post("/contacts", function(req, res) {
     else console.log(body);
   });
 
-  dbContacts.push(newContact);
-
   res.status(201).json(newContact);
 });
 
@@ -100,7 +97,16 @@ app.post("/contacts", function(req, res) {
  */
 
 app.get("/contacts/:id", function(req, res) {
-  handleError(res, "get /contacts/:id is not implemented yet!", 500);
+  fetch(function(error, body) {
+    if (body) {
+      var myContact = body.find(function(item) {
+        return item.id === id;
+      });
+      res.status(200).json(myContact);
+    } else {
+      handleError(res, "Could not find contact with id: "+ id, 404);
+    }
+  });
 });
 
 app.put("/contacts/:id", function(req, res) {
