@@ -101,7 +101,7 @@ app.get("/contacts/:id", function(req, res) {
   fetch(function(error, body) {
     if (body) {
       var myContact = body.find(function(item) {
-        return item.id === id;
+        return item.id === req.params.id;
       });
       res.status(200).json(myContact);
     } else {
