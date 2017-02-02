@@ -31,6 +31,12 @@ function handleError(res, reason, message, code) {
 
 var dbContacts = [{ name: "sadmir", username: "sadhal", createdOn: new Date() }];
 var myURL = 'http://gradle-spingboot-seed-contacts-be-dev.10.101.2.180.xip.io/personer';
+var host = process.env.GRADLE_SPINGBOOT_SEED_SERVICE_HOST;
+var port = process.env.GRADLE_SPINGBOOT_SEED_SERVICE_PORT;
+if (host && port) {
+  myURL = 'http://' + host + ':' + port + '/personer';
+}
+console.log('Rest url: ' + myURL);
 
 app.get("/contacts", function(req, res) {
 
