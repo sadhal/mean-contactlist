@@ -62,7 +62,7 @@ function fetch(callback) {
           };
         }));
       }
-    }
+    });
 }
 
 app.post("/contacts", function(req, res) {
