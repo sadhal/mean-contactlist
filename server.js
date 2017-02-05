@@ -57,8 +57,10 @@ function fetch(callback) {
         callback(null, body.map(function(c, index) {
           return {
             _id : c.id,
-            firstName : c.name,
-            lastName  : c.name,
+            firstName : c.firstName,
+            lastName  : c.lastName,
+            email     : c.email,
+            twitter   : c.twitterHandle,
             createdOn : c.createdOn
           };
         }));
@@ -71,11 +73,13 @@ app.post("/contacts", function(req, res) {
   newContact.createdOn = new Date();
 
   if (!(req.body.firstName || req.body.lastName)) {
-    handleError(res, "Invalid user input", "Must provide a first or last name.", 400);
+    handleError(res, "Invalid user input", "Must provide first and last name.", 400);
   }
 
-  newContact.name = req.body.firstName + ' ' + req.body.lastName;
-  newContact.username = req.body.firstName;
+  newContact.firstName = req.body.firstName;
+  newContact.lastName  = req.body.lastName;
+  newContact.email = req.body.email;
+  newContact.twitterHandle = req.body.twitter;
 
   var opts = {
     method: 'POST',
@@ -83,12 +87,16 @@ app.post("/contacts", function(req, res) {
     json: true,
     body: newContact
   };
-  request(opts, function(e,r,body) {
-    if (e) console.error(e);
-    else console.log(body);
-  });
 
-  res.status(201).json(newContact);
+  request(opts, function(e,r,body) {
+    if (e) {
+      console.error(e);
+      handleError(res, "Save failed! User service response: " + e, 500);
+    } else {
+      console.log(body);
+      res.status(201).json(newContact);
+    }
+  });
 });
 
 /*  "/contacts/:id"
@@ -99,14 +107,16 @@ app.post("/contacts", function(req, res) {
 
 app.get("/contacts/:id", function(req, res) {
   fetch(function(error, body) {
+    var myContact;
     if (body) {
-      var myContact = body.find(function(item) {
+      myContact = body.find(function(item) {
         return item.id === req.params.id;
       });
-      res.status(200).json(myContact);
-    } else {
-      handleError(res, "Could not find contact with id: "+ id, 404);
+      if (myContact) {
+        res.status(200).json(myContact);
+      } 
     }
+    handleError(res, "Could not find contact with id: "+ id, 404);
   });
 });
 
