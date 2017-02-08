@@ -109,16 +109,20 @@ app.post("/contacts", function(req, res) {
 app.get("/contacts/:id", function(req, res) {
   fetch(function(error, body) {
     var myContact;
-    if (body) {
+    if (error) {
+      console.error(error);
+      handleError(res, "Error while searching contact with id: "+ req.params.id, 500);
+    } else if (body) {
       console.log(body)
       myContact = body.find(function(item) {
         return item._id === req.params.id;
       });
       if (myContact) {
         res.status(200).json(myContact);
-      } 
+      } else {
+        handleError(res, "Could not find contact with id: "+ req.params.id, 404);
+      }
     }
-    handleError(res, "Could not find contact with id: "+ req.params.id, 404);
   });
 });
 
