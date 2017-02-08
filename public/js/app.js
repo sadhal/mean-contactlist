@@ -28,7 +28,8 @@ angular.module("contactsApp", ['ngRoute'])
                 then(function(response) {
                     return response;
                 }, function(response) {
-                    alert("Error finding contacts.");
+                    console.log("Error finding contacts.");
+                    console.log(response);
                 });
         }
         this.createContact = function(contact) {
@@ -36,7 +37,8 @@ angular.module("contactsApp", ['ngRoute'])
                 then(function(response) {
                     return response;
                 }, function(response) {
-                    alert("Error creating contact.");
+                    console.log("Error creating contact.");
+                    console.log(response);
                 });
         }
         this.getContact = function(contactId) {
@@ -45,7 +47,8 @@ angular.module("contactsApp", ['ngRoute'])
                 then(function(response) {
                     return response;
                 }, function(response) {
-                    alert("Error finding this contact.");
+                    console.log("Error finding this contact.");
+                    console.log(response);
                 });
         }
         this.editContact = function(contact) {
