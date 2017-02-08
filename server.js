@@ -110,14 +110,15 @@ app.get("/contacts/:id", function(req, res) {
   fetch(function(error, body) {
     var myContact;
     if (body) {
+      console.log(body)
       myContact = body.find(function(item) {
-        return item.id === req.params.id;
+        return item._id === req.params.id;
       });
       if (myContact) {
         res.status(200).json(myContact);
       } 
     }
-    handleError(res, "Could not find contact with id: "+ id, 404);
+    handleError(res, "Could not find contact with id: "+ req.params.id, 404);
   });
 });
 
