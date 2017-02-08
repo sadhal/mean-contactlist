@@ -49,11 +49,17 @@ app.get("/contacts", function(req, res) {
 });
 
 function fetch(callback) {
-  request
-    .get(myURL, function(error, response, body) {
+  var opts = {
+    method: 'GET',
+    uri: myURL,
+    headers: {
+      'Accept': 'application/json'
+    }
+  };
+  request(opts, function(error, response, body) {
       if (!error && response.statusCode == 200) {
         console.log('Body: ', body);
-        body = body ? JSON.parse(body) : [];
+        //body = body ? JSON.parse(body) : [];
         callback(null, body.map(function(c, index) {
           return {
             _id : c.id,
@@ -85,7 +91,10 @@ app.post("/contacts", function(req, res) {
     method: 'POST',
     uri: myURL,
     json: true,
-    body: newContact
+    body: newContact,
+    headers: {
+      'Accept': 'application/json'
+    }
   };
 
   request(opts, function(e,r,body) {
