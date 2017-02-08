@@ -94,7 +94,8 @@ app.post("/contacts", function(req, res) {
       handleError(res, "Save failed! User service response: " + e, 500);
     } else {
       console.log(body);
-      res.status(201).json(newContact);
+      body = body ? JSON.parse(body) : {};
+      res.status(201).json(body);
     }
   });
 });
