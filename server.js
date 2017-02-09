@@ -101,9 +101,15 @@ app.post("/contacts", function(req, res) {
     if (e) {
       handleError(res, "Save failed! User service response: " + e, 500);
     } else {
-      console.log(body);
-      body = body ? JSON.parse(body) : {};
-      body._id = body.id;
+      console.log('Typeof: ', typeof body, body);
+      if (typeof body === 'String') {
+        console.log('parsing body');
+        body = body ? JSON.parse(body) : newContact;
+      }
+      if (body && body.id) {
+        console.log('adding _id property to model');
+        body._id = body.id;
+      }
       res.status(201).json(body);
     }
   });
