@@ -2,6 +2,9 @@ var express = require("express");
 var path = require("path");
 var bodyParser = require("body-parser");
 var request = require('request');
+var amqp = require('amqplib/callback_api');
+var amqpConn = null;
+var amqpChannel = null;
 
 var CONTACTS_COLLECTION = "contacts";
 
@@ -32,12 +35,68 @@ if (host && port) {
 }
 console.log('Rest url: ' + myURL);
 
+
+// Initialize RabbitMQ
+function startAmqp() {
+  amqp.connect('amqp://openshift-rabbitmq', function(err, conn) {
+    if (err) {
+      console.error("[AMQP]", err.message);
+      return setTimeout(startAmqp, 1000);
+    }
+    conn.on("error", function(err) {
+      if (err.message !== "Connection closing") {
+        console.error("[AMQP] conn error", err.message);
+      }
+    });
+    conn.on("close", function() {
+      console.error("[AMQP] reconnecting");
+      return setTimeout(startAmqp, 1000);
+    });
+    console.log("[AMQP] connected");
+    amqpConn = conn;
+
+
+    amqpConn.createChannel(function(err, ch) {
+      var q = 'auditContacts';
+
+      ch.assertQueue(q, {durable: false});
+      //  amqpChannel = ch;
+
+      console.log(" [*] Waiting for messages in %s. To exit press CTRL+C", q);
+      ch.consume(q, function(msg) {
+      console.log(" [x] Received %s", msg.content.toString());
+      }, {noAck: true});
+    });
+  });  
+}
+
+console.log("starting RabbitMQ");
+startAmqp();
+
+function sendAudit(msg) {
+  console.log("sending audit... create channel first");
+  amqpConn.createChannel(function(err, ch) {
+    if (err) console.error("[AMQP]", err.message);
+    else console.log("[AMQP] channel created");
+
+    var q = 'auditContacts';
+
+    ch.assertQueue(q, {durable: false});
+    
+    // Note: on Node 6 Buffer.from(msg) should be used
+    ch.sendToQueue(q, new Buffer(msg));
+    console.log(" [x] Sent message: " + msg);
+  });
+}
+
 /*  "/contacts"
  *    GET: finds all contacts
  *    POST: creates a new contact
  */
 
 app.get("/contacts", function(req, res) {
+
+  sendAudit(JSON.stringify(req.headers));
 
   fetch(function(error, body) {
     if (body) {
@@ -96,6 +155,8 @@ app.post("/contacts", function(req, res) {
       'Accept': 'application/json'
     }
   };
+
+  sendAudit(JSON.stringify(req.headers) + JSON.stringify(newContact));
 
   request(opts, function(e,r,body) {
     if (e) {
