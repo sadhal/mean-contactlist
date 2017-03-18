@@ -6,6 +6,7 @@ var debug = require("debug")("contacts-fe");
 var winston = require("winston");
 var log4js = require("log4js");
 var logger = log4js.getLogger();
+var uuidV4 = require("uuid/v4");
 
 debug("debug: booting app %s", "contacts-fe", { "label": "mymeta" });
 
@@ -54,29 +55,30 @@ logger.info("log4js: Rest url to back end", { "url": myURL });
  */
 
 app.get("/contacts", function(req, res) {
-
+  var corrId = uuidV4();
   fetch(function(error, body) {
     if (body) {
       res.status(200).json(body);
     } else {
       res.status(500);
     }
-  });
+  }, corrId);
 });
 
-function fetch(callback) {
+function fetch(callback, corrId) {
   var opts = {
     method: 'GET',
     uri: myURL,
     headers: {
-      'Accept': 'application/json'
+      'Accept': 'application/json',
+      'X-Correlation-ID': corrId
     }
   };
   request(opts, function(error, response, body) {
       if (!error && response.statusCode == 200) {
-        console.log('Body: ', body);
-        winston.verbose("Winston: Body: ", { "body": body });
-	logger.debug("log4js: Boddy: ", body);
+        console.log('Body: ', body, corrId);
+        winston.verbose("Winston: ", { "body": body, "corrId": corrId });
+	logger.debug("log4js: ", { "body": body, "corrId": corrId });
         body = body ? JSON.parse(body) : [];
         callback(null, body.map(function(c, index) {
           return {
@@ -93,6 +95,7 @@ function fetch(callback) {
 }
 
 app.post("/contacts", function(req, res) {
+  var corrId = uuidV4();
   var newContact = req.body;
   newContact.createdOn = new Date();
 
@@ -111,7 +114,8 @@ app.post("/contacts", function(req, res) {
     json: true,
     body: newContact,
     headers: {
-      'Accept': 'application/json'
+      'Accept': 'application/json',
+      'X-Correlation-ID': corrId
     }
   };
 
@@ -119,8 +123,9 @@ app.post("/contacts", function(req, res) {
     if (e) {
       handleError(res, "Save failed! User service response: " + e, 500);
     } else {
-      console.log('Typeof: ', typeof body, body);
-      winston.verbose("Winston: body", { "body": body });
+      console.log('Typeof: ', typeof body, body, corrId);
+      winston.verbose("Winston: ", { "body": body, "corrId": corrId });
+      logger.debug("log4js: ", { "body": body, "corrId": corrId });
       if (typeof body === 'String') {
         console.log('parsing body');
         body = body ? JSON.parse(body) : newContact;
@@ -141,13 +146,18 @@ app.post("/contacts", function(req, res) {
  */
 
 app.get("/contacts/:id", function(req, res) {
+  var corrId = uuidV4();
   fetch(function(error, body) {
     var myContact;
     if (error) {
-      console.error(error);
+      console.error(error, corrId);
+      winston.error("Winston: ", { "error": error, "corrId": corrId });
+      logger.error("log4js: ", { "error": error, "corrId": corrId });
       handleError(res, "Error while searching contact with id: "+ req.params.id, 500);
     } else if (body) {
-      console.log(body)
+      console.log(body, corrId);
+      winston.info("Winston: ", { "body": body, "corrId": corrId });
+      logger.info("log4js: ", { "body": body, "corrId": corrId });
       myContact = body.find(function(item) {
         return item._id === req.params.id;
       });
@@ -157,7 +167,7 @@ app.get("/contacts/:id", function(req, res) {
         handleError(res, "Could not find contact with id: "+ req.params.id, 404);
       }
     }
-  });
+  }, corrId);
 });
 
 app.put("/contacts/:id", function(req, res) {
